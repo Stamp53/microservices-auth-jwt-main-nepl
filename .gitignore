@@ -1,0 +1,44 @@
+# Compiled class file
+**/target/
+*.class
+
+# Log files
+*.log
+logs/
+
+# Database files
+data/
+*.mv.db
+*.trace.db
+
+# Package Files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Virtual machines and IDEs
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.classpath
+.project
+.settings/
+bin/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Frontend dependencies and build artifacts
+node_modules/
+**/node_modules/
+.angular/
+**/.angular/
+dist/
+**/dist/
