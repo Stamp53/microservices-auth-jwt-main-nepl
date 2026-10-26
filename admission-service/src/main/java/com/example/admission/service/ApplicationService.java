@@ -137,7 +137,7 @@ public class ApplicationService {
                     ? dto.getPassword()
                     : DEFAULT_STUDENT_PASSWORD;
 
-            // --- SAGA STEP 1: Call AUTH-SERVICE via RestTemplate to create credentials in authdb ---
+            // Step 1: Call AUTH-SERVICE to create student login credentials
             authServiceClient.registerStudent(
                     uname,
                     password,
@@ -147,11 +147,11 @@ public class ApplicationService {
             authAccountCreated = true;
         }
 
-        // --- SAGA STEP 2: Save local application in admissiondb ---
+        // Step 2: Save the admission record in our local database
         try {
             return saveLocalApplication(dto, uname, currentYear);
         } catch (Exception ex) {
-            // --- SAGA COMPENSATING ACTION: Rollback user in AUTH-SERVICE if local save fails ---
+            // Undo/Rollback: If local save fails, delete the user created in Step 1
             if (authAccountCreated && uname != null) {
                 authServiceClient.rollbackUser(uname);
             }

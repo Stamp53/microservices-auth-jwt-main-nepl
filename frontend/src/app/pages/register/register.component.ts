@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { AdmissionService } from '../../services/admission.service';
 import { AuthService } from '../../services/auth.service';
 import { StudentRegistrationDto, ALL_CLASSES } from '../../models';
+import { parseApiError } from '../../utils/error.util';
 
 @Component({
   selector: 'app-register',
@@ -423,11 +424,7 @@ export class RegisterComponent implements OnInit {
       },
       error: (err) => {
         this.loading = false;
-        if (err.status === 0) {
-          this.errorMessage = 'Network connection failed. Please ensure API Gateway (port 8080) is running.';
-        } else {
-          this.errorMessage = err?.error?.error || err?.error?.message || 'Failed to submit application. Please check your inputs.';
-        }
+        this.errorMessage = parseApiError(err);
       }
     });
   }

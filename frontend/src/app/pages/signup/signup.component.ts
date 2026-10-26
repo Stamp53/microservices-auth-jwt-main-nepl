@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { parseApiError } from '../../utils/error.util';
 
 @Component({
   selector: 'app-signup',
@@ -314,10 +315,7 @@ export class SignupComponent implements OnInit {
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage =
-            err?.error?.message ||
-            err?.error?.error ||
-            'Registration failed. Please verify your details.';
+          this.errorMessage = parseApiError(err);
         }
       });
   }

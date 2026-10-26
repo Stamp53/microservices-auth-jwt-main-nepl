@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdmissionService } from '../../services/admission.service';
 import { AdmissionApplication, AdminDashboardData, AdminStudentRegistrationDto, ApprovalDto, RejectionDto, ReportData, ALL_CLASSES } from '../../models';
+import { parseApiError } from '../../utils/error.util';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -17,21 +18,21 @@ import { AdmissionApplication, AdminDashboardData, AdminStudentRegistrationDto, 
         </div>
         <div class="view-toggles">
           <button
-            (click)="activeView = 'applications'"
+            (click)="activeView = 'applications'; clearAlert()"
             class="toggle-btn"
             [class.active]="activeView === 'applications'"
           >
             📋 Applications
           </button>
           <button
-            (click)="activeView = 'reports'; loadReports()"
+            (click)="activeView = 'reports'; loadReports(); clearAlert()"
             class="toggle-btn"
             [class.active]="activeView === 'reports'"
           >
             📊 Class Reports
           </button>
           <button
-            (click)="activeView = 'register'"
+            (click)="activeView = 'register'; clearAlert()"
             class="toggle-btn"
             [class.active]="activeView === 'register'"
           >
@@ -62,7 +63,8 @@ import { AdmissionApplication, AdminDashboardData, AdminStudentRegistrationDto, 
 
       @if (alertMessage) {
         <div class="alert" [ngClass]="alertType === 'success' ? 'alert-success' : 'alert-error'">
-          {{ alertMessage }}
+          <span>{{ alertMessage }}</span>
+          <button type="button" class="alert-close" (click)="clearAlert()" title="Dismiss">&times;</button>
         </div>
       }
 
@@ -744,9 +746,23 @@ import { AdmissionApplication, AdminDashboardData, AdminStudentRegistrationDto, 
       border-radius: 6px;
       margin-bottom: 1.5rem;
       font-size: 0.9rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     .alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
     .alert-error { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+    .alert-close {
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      line-height: 1;
+      cursor: pointer;
+      color: inherit;
+      opacity: 0.7;
+      padding: 0 0 0 1rem;
+    }
+    .alert-close:hover { opacity: 1; }
     .form-card {
       padding: 1.75rem;
       background: white;
@@ -884,7 +900,7 @@ export class AdminDashboardComponent implements OnInit {
         this.loadApplications();
       },
       error: (err) => {
-        this.showAlert(err.error?.error || 'Failed to approve application', 'error');
+        this.showAlert(parseApiError(err), 'error');
       }
     });
   }
@@ -905,7 +921,7 @@ export class AdminDashboardComponent implements OnInit {
         this.loadApplications();
       },
       error: (err) => {
-        this.showAlert(err.error?.error || 'Failed to reject application', 'error');
+        this.showAlert(parseApiError(err), 'error');
       }
     });
   }
@@ -932,6 +948,7 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   submitAdminRegister(): void {
+    this.clearAlert();
     this.registerSubmitting = true;
     const payload = {
       ...this.adminRegisterDto,
@@ -949,19 +966,32 @@ export class AdminDashboardComponent implements OnInit {
       },
       error: (err) => {
         this.registerSubmitting = false;
-        if (err.status === 0) {
-          this.showAlert('Network connection failed. Please ensure API Gateway (port 8080) is running.', 'error');
-        } else {
-          const msg = err?.error?.error || err?.error?.message || 'Registration failed. Please check inputs.';
-          this.showAlert(msg, 'error');
-        }
+        this.showAlert(parseApiError(err), 'error');
       }
     });
   }
 
-  private showAlert(msg: string, type: 'success' | 'error'): void {
+  private alertTimer: any = null;
+
+  showAlert(msg: string, type: 'success' | 'error'): void {
+    this.clearAlert();
     this.alertMessage = msg;
     this.alertType = type;
-    setTimeout(() => (this.alertMessage = ''), 6000);
+
+    // Only auto-dismiss success alerts after 6 seconds; keep error alerts visible until the user submits or performs another action
+    if (type === 'success') {
+      this.alertTimer = setTimeout(() => {
+        this.alertMessage = '';
+        this.alertTimer = null;
+      }, 6000);
+    }
+  }
+
+  clearAlert(): void {
+    if (this.alertTimer) {
+      clearTimeout(this.alertTimer);
+      this.alertTimer = null;
+    }
+    this.alertMessage = '';
   }
 }
